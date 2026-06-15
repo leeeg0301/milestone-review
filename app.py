@@ -80,7 +80,21 @@ def parse_lanes(text):
             result.append(lane)
 
     return result if result else LANES.copy()
+    
+def clean_group_name(value):
+    """
+    그룹명 빈칸, NaN, nan, None 등을 모두 빈 문자열로 처리.
+    실제로 입력된 그룹명만 다공종 그룹으로 사용.
+    """
+    if pd.isna(value):
+        return ""
 
+    text = str(value).strip()
+
+    if text.lower() in ["nan", "none", "null", ""]:
+        return ""
+
+    return text
 
 def normalize_df(df):
     """
@@ -116,7 +130,7 @@ def normalize_df(df):
 
         no = str(row["번호"]).replace("#", "").strip()
         name = str(row.get("공사명", "")).strip()
-        group = str(row.get("그룹명", "")).strip()
+        group = clean_group_name(row.get("그룹명", ""))
 
         lanes = parse_lanes(row.get("차로", "전체"))
 
@@ -147,7 +161,7 @@ def build_work_units(df, use_group=True):
     units = {}
 
     for idx, row in df.iterrows():
-        group_name = str(row["그룹명"]).strip()
+        group_name = clean_group_name(row.get("그룹명", ""))
 
         if use_group and group_name != "":
             key = ("GROUP", group_name, row["방향"])
